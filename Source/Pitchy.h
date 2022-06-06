@@ -65,4 +65,5 @@ private:
     float outphasor1 = 0.0f;
     float outphasror2 = 0.0f;
     float temp = 0.0f;
+    float tempProcess = 0.0f;
 };

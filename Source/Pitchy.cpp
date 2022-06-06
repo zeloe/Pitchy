@@ -1,10 +1,8 @@
 /*
   ==============================================================================
-
     Pitchy.cpp
     Created: 29 May 2022 8:06:26pm
     Author:  Zeno  Loesch
-
   ==============================================================================
 */
 
@@ -28,7 +26,7 @@ float Pitchy::phasor(float frequency)
 {
     //maximilian.h
     phasor_1 += (1./(mSampleRate/(frequency)));
-    if (phasor_1 > 1.0) phasor_1 = 0.f ;
+    if (phasor_1 > 1.0) phasor_1 -= 1.f ;
     return phasor_1;
     
 }
@@ -37,7 +35,7 @@ float Pitchy::outofphasephasor(float frequency)
 {
     //maximilian.h
     outofphasephasor_1 = (1./(mSampleRate/(frequency)));
-    if (outofphasephasor_1 > 1.0) outofphasephasor_1 = 0.f;
+    if (outofphasephasor_1 > 1.0) outofphasephasor_1 -= 1.f;
     return outofphasephasor_1;
     
 }
@@ -178,12 +176,13 @@ float Pitchy::process(float inAudio, float frequency)
     phasein = this->phasor(frequency);
     phaseout = this->outofphasephasor(frequency);
     
-    if (mDelayIndex > MaxBufferDelaySize) mDelayIndex = 0;
+    //if (mDelayIndex > MaxBufferDelaySize) mDelayIndex -= mDelayIndex;
     delay1 = this->delaylineinter(phasein  * mSampleRate * 0.001f , mDelayBuffer_1, inAudio);
-   // delay2 = this->delaylineinter(phaseout * mSampleRate * 0.001f , mDelayBuffer_2, inAudio);
-    delayLine1->pushSample(0, delay1);
+    delay2 = this->delaylineinter(phaseout * mSampleRate * 0.001f , mDelayBuffer_2, inAudio);
+    tempProcess = delay1 * (this->processWaveShape(frequency, phasein, possineBuffer)) + delay2 * (this->processWaveShape(frequency, phaseout, possineBuffer)) * -1.f;
+    delayLine1->pushSample(0, tempProcess);
     delayLine1->setDelay(phasein  * mSampleRate * 0.001f * 100.f);
-    delayLine2->pushSample(0, delay1);
+    delayLine2->pushSample(0, tempProcess);
     delayLine2->setDelay(phaseout * mSampleRate * 0.001f * 100.f);
     output = (delayLine1->popSample(0) * (this->processWaveShape(frequency, phasein, possineBuffer)) + delayLine2->popSample(0) * (this->processWaveShape(frequency, phaseout, possineBuffer)) * -1.f);
 return output;
