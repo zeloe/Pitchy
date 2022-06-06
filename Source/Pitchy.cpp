@@ -43,6 +43,7 @@ float Pitchy::outofphasephasor(float frequency)
 float Pitchy::processWaveShape(float frequency, float index, const double *buffer)
 {
     //maximilian.h
+    //cubic hermite interpolation
     double remainder;
         double a,b,c,d,a1,a2,a3;
         double output;
@@ -98,7 +99,7 @@ double Pitchy::InterCubic(float x0, float x1, float x2, float x3, float t)
 double Pitchy::delaylineinter(float inDelayTimeInSamples, float *inputBuffer, float inputAudio)
 {
    
-    //borken delay with alasing
+    //working delay
    
      mDelayIndex = (++mDelayIndex ) % MaxBufferDelaySize;
      
@@ -156,19 +157,6 @@ double Pitchy::delaylineinter(float inDelayTimeInSamples, float *inputBuffer, fl
     
     
 }
-double Pitchy::filtering(float inputaudio)
-{
-    preout8 = preout7 * 0.5f;
-    preout7 = preout6 * 0.5f;
-    preout6 = preout5 * 0.5f;
-    preout5 = preout4 * 0.5;
-    preout4 = preout3 * 0.5f;
-    preout3 = preout2* 0.5f;
-    preout2 = preout *0.5f;
-    preout = inputaudio;
-    
-    return(inputaudio + preout + preout2 + preout3 + preout4 + preout5 + preout6 + preout7 + preout8 * 0.5);
-}
 
 float Pitchy::process(float inAudio, float frequency)
 {
@@ -177,13 +165,13 @@ float Pitchy::process(float inAudio, float frequency)
     phaseout = this->outofphasephasor(frequency);
     
     //if (mDelayIndex > MaxBufferDelaySize) mDelayIndex -= mDelayIndex;
-    delay1 = this->delaylineinter(phasein  * mSampleRate * 0.001f , mDelayBuffer_1, inAudio);
-    delay2 = this->delaylineinter(phaseout * mSampleRate * 0.001f , mDelayBuffer_2, inAudio);
+    delay1 = this->delaylineinter(phasein, mDelayBuffer_1, inAudio);
+    delay2 = this->delaylineinter(phaseout , mDelayBuffer_2, inAudio);
     tempProcess = delay1 * (this->processWaveShape(frequency, phasein, possineBuffer)) + delay2 * (this->processWaveShape(frequency, phaseout, possineBuffer)) * -1.f;
     delayLine1->pushSample(0, tempProcess);
-    delayLine1->setDelay(phasein  * mSampleRate * 0.001f * 100.f);
+    delayLine1->setDelay(phasein  * mSampleRate * 0.1f);
     delayLine2->pushSample(0, tempProcess);
-    delayLine2->setDelay(phaseout * mSampleRate * 0.001f * 100.f);
+    delayLine2->setDelay(phaseout * mSampleRate * 0.1f);
     output = (delayLine1->popSample(0) * (this->processWaveShape(frequency, phasein, possineBuffer)) + delayLine2->popSample(0) * (this->processWaveShape(frequency, phaseout, possineBuffer)) * -1.f);
 return output;
 }

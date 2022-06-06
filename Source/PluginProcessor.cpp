@@ -124,6 +124,7 @@ void PitchyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     detuneSmooth.reset(sampleRate, 0.001f);
     dryWetSmooth.reset(sampleRate, 0.001f);
     ampSmooth.reset(sampleRate, 0.001f);
+    offsetSmooth.reset(sampleRate, 0.001f);
 }
 
 void PitchyAudioProcessor::releaseResources()
@@ -161,15 +162,16 @@ bool PitchyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) c
 void PitchyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
+  //  auto totalNumInputChannels  = getTotalNumInputChannels();
+  //  auto totalNumOutputChannels = getTotalNumOutputChannels();
     
     
     detuneSmooth.setTargetValue(apvts.getRawParameterValue("Detune")->load());
-    double detuneFreq = pfreq(detuneSmooth.getNextValue() * 0.5f,  100.f);
+    double detuneFreq = pfreq(detuneSmooth.getNextValue(),  100.f);
     dryWetSmooth.setTargetValue(apvts.getRawParameterValue("Wet")->load());
     ampSmooth.setTargetValue(apvts.getRawParameterValue("Amp")->load());
-
+    offsetSmooth.setTargetValue(apvts.getRawParameterValue("FineTune")->load());
+    float offsetFreq = offsetSmooth.getNextValue();
             auto channelDataL = buffer.getWritePointer (0);
             auto channelDataR = buffer.getWritePointer (1);
             auto outchannelDataL = buffer.getWritePointer (0);
@@ -178,8 +180,8 @@ void PitchyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
             {
             
                 float offset = 1.f  - dryWetSmooth.getNextValue();
-                outchannelDataL[i] =channelDataL[i] * offset + ((detunerOneL->process(channelDataL[i], detuneFreq) + detunerTwoL->process(channelDataL[i], detuneFreq + 0.001f) +  detunerThreeL->process(channelDataL[i], detuneFreq + 0.002f) + detunerFourL->process(channelDataL[i], detuneFreq + 0.003f)) * ampSmooth.getNextValue()) * dryWetSmooth.getNextValue();
-                outchannelDataR[i] =channelDataR[i] * offset + ((detunerOneR->process(channelDataR[i], detuneFreq) + detunerTwoR->process(channelDataR[i], detuneFreq + 0.001f) +  detunerThreeR->process(channelDataR[i], detuneFreq + 0.002f) + detunerFourR->process(channelDataR[i], detuneFreq + 0.003f)) * ampSmooth.getNextValue()) * dryWetSmooth.getNextValue();
+                outchannelDataL[i] =channelDataL[i] * offset + ((detunerOneL->process(channelDataL[i], detuneFreq) + detunerTwoL->process(channelDataL[i], detuneFreq + 0.01f + offsetFreq) +  detunerThreeL->process(channelDataL[i], detuneFreq + 0.02f + offsetFreq) + detunerFourL->process(channelDataL[i], detuneFreq + 0.03f + offsetFreq)) * ampSmooth.getNextValue()) * dryWetSmooth.getNextValue();
+                outchannelDataR[i] =channelDataR[i] * offset + ((detunerOneR->process(channelDataR[i], detuneFreq) + detunerTwoR->process(channelDataR[i], detuneFreq + 0.01f + offsetFreq) +  detunerThreeR->process(channelDataR[i], detuneFreq + 0.02f + offsetFreq) + detunerFourR->process(channelDataR[i], detuneFreq + 0.03f + offsetFreq)) * ampSmooth.getNextValue()) * dryWetSmooth.getNextValue();
             }
         
             
@@ -225,26 +227,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout PitchyAudioProcessor::create
     layout.add(std::make_unique<juce::AudioParameterFloat>("Detune","Detune",0.01f,1.f,0.5));
     layout.add(std::make_unique<juce::AudioParameterFloat>("Amp","Amp",0.01f,1.f,0.25));
     layout.add(std::make_unique<juce::AudioParameterFloat>("Wet","Wet",0.00f,1.f,0.5));
-    
+    layout.add(std::make_unique<juce::AudioParameterFloat>("FineTune","FineTune",0.001,1.f,0.1f));
     return layout;
 }
 
 
-void PitchyAudioProcessor::updateFreq()
-{
-    interFreq = targetFreq / mSampleRate;
-}
-
-void PitchyAudioProcessor::updateAmp()
-{
-    interAmp = targetAmp / mSampleRate;
-}
-
-void PitchyAudioProcessor::updateWet()
-{
-    interWet = targetWet / mSampleRate;
-    
-}
 
 //==============================================================================
 // This creates new instances of the plugin..

@@ -13,18 +13,10 @@
 //==============================================================================
 /**
 */
-inline float factor (float pfreq, float dw)
-{
-    return (1.f - pfreq * dw/1000.f);
-}
+
 inline float pfreq (float factor, float dw)
 {
     return(factor * 1000.f/dw + 1.f);
-}
-
-inline float pfreq2 (float factor, float dw)
-{
-    return(factor * 1000.f)/(dw+ 1.f);
 }
 
 
@@ -91,21 +83,7 @@ public:
         }
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts{*this, nullptr, "Parameters", createParameterLayout()};
-    void updateFreq();
-    void updateAmp();
-    void updateWet();
 private:
-    float targetFreq = 0.0f;
-    float currentFreq = 0.0f;
-    float interFreq = 0.0f;
-    float targetAmp = 0.0f;
-    float currentAmp = 0.0f;
-    float interAmp = 0.0f;
-    
-    float targetWet = 0.0f;
-    float currentWet = 0.0f;
-    float interWet = 0.0f;
-    float mSampleRate = 0.0f;
     std::unique_ptr<Pitchy> detunerOneL;
     std::unique_ptr<Pitchy> detunerTwoL;
     std::unique_ptr<Pitchy> detunerThreeL;
@@ -117,6 +95,7 @@ private:
     juce::LinearSmoothedValue<float> detuneSmooth {0.0f};
     juce::LinearSmoothedValue<float> dryWetSmooth {0.0f};
     juce::LinearSmoothedValue<float> ampSmooth {0.0f};
+    juce::LinearSmoothedValue<float> offsetSmooth {0.0f};
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchyAudioProcessor)
 };

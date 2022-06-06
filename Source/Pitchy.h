@@ -27,7 +27,6 @@ public:
     void getTheSampleRate(double sampleRate);
     void getTheBlockSize(int blocksize);
     double InterCubic(float x0, float x1, float x2, float x3, float t);
-    double filtering(float inputaudio);
     float mSampleRate = 0;
     float mblocksize = 0;
     int MaxBufferDelaySize = 5000;
@@ -50,14 +49,6 @@ private:
     float g = 0.5f;
     int len = 1;
     int x1 = 0, x2 = 0, x3 = 0, x0 = 0;
-    float preout = 0.0f;
-    float preout2 = 0.0f;
-    float preout3 = 0.0f;
-    float preout4 = 0.0f;
-    float preout5 = 0.0f;
-    float preout6 = 0.0f;
-    float preout7 = 0.0f;
-    float preout8 = 0.0f;
     float phase1 = 0.0f;
     float phase2 = 0.25f;
     float outputfinal = 0.0f;
