@@ -126,7 +126,7 @@ void PitchyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     ampSmooth.reset(sampleRate, 0.001f);
     offsetSmooth.reset(sampleRate, 0.000001f);
     ampTuneSmooth.reset(sampleRate, 0.001f);
-    ampTuneAmountSmooth.reset(sampleRate, 0.001f);
+    ampTuneAmountSmooth.reset(sampleRate, 0.01f);
 }
 
 void PitchyAudioProcessor::releaseResources()
@@ -174,9 +174,7 @@ void PitchyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     //freq = f(detuneSmooth.getNextValue(),getSampleRate()*0.001f);
     dryWetSmooth.setTargetValue(apvts.getRawParameterValue("Wet")->load());
     ampSmooth.setTargetValue(apvts.getRawParameterValue("Amp")->load());
-    offsetSmooth.setTargetValue(apvts.getRawParameterValue("Tune")->load());
-    
-    ampTuneAmountSmooth.setTargetValue(apvts.getRawParameterValue("TuneAmount")->load());
+    ampTuneAmountSmooth.setTargetValue(apvts.getRawParameterValue("Chorus")->load());
    // float offsetFreq = offsetSmooth.getNextValue();
             auto channelDataL = buffer.getWritePointer (0);
             auto channelDataR = buffer.getWritePointer (1);
@@ -186,15 +184,15 @@ void PitchyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
             {
             
                 float offset = 1.f  - dryWetSmooth.getNextValue();
-                outchannelDataL[i] =channelDataL[i] * offset + ((detunerOneL->process(channelDataL[i], detuneFreq, ampTuneSmooth.getNextValue(), offsetSmooth.getNextValue())) +
-                                                                (detunerTwoL->process(channelDataL[i], detuneFreq +0.01f, ampTuneSmooth.getNextValue(), offsetSmooth.getNextValue()+ 0.01f) +
-                                                                detunerThreeL->process(channelDataL[i], detuneFreq + 0.02f,  ampTuneSmooth.getNextValue(), offsetSmooth.getNextValue()+ 0.02f) +
-                                                                detunerFourL->process(channelDataL[i], detuneFreq + 0.03f,ampTuneSmooth.getNextValue(), offsetSmooth.getNextValue()+ 0.03f ) *
-                                                                ampTuneAmountSmooth.getNextValue())) * ampSmooth.getNextValue() * dryWetSmooth.getNextValue();
-                outchannelDataR[i] =channelDataR[i] * offset + ((detunerOneR->process(channelDataR[i], detuneFreq, ampTuneSmooth.getNextValue(), offsetSmooth.getNextValue())) +
-                                                                (detunerTwoR->process(channelDataR[i], detuneFreq +0.01f, ampTuneSmooth.getNextValue(), offsetSmooth.getNextValue()+ 0.01f) +
-                                                                detunerThreeR->process(channelDataR[i], detuneFreq + 0.02f,  ampTuneSmooth.getNextValue(), offsetSmooth.getNextValue()+ 0.02f) +
-                                                                detunerFourR->process(channelDataR[i], detuneFreq + 0.03f,ampTuneSmooth.getNextValue(), offsetSmooth.getNextValue()+ 0.03f )))
+                outchannelDataL[i] =channelDataL[i] * offset + ((detunerOneL->process(channelDataL[i], detuneFreq, ampTuneSmooth.getNextValue(),0.0f )) +
+                                                                (detunerTwoL->process(channelDataL[i], detuneFreq +0.01f, ampTuneSmooth.getNextValue(),  0.01f) +
+                                                                detunerThreeL->process(channelDataL[i], detuneFreq + 0.02f,  ampTuneSmooth.getNextValue(), 0.02f) +
+                                                                detunerFourL->process(channelDataL[i], detuneFreq + 0.03f,ampTuneSmooth.getNextValue(), 0.03f )) *
+                                                                ampTuneAmountSmooth.getNextValue()) * ampSmooth.getNextValue() * dryWetSmooth.getNextValue();
+                outchannelDataR[i] =channelDataR[i] * offset + ((detunerOneR->process(channelDataR[i], detuneFreq, ampTuneSmooth.getNextValue(), 0.0f)) +
+                                                                (detunerTwoR->process(channelDataR[i], detuneFreq +0.01f, ampTuneSmooth.getNextValue(),  0.01f) +
+                                                                detunerThreeR->process(channelDataR[i], detuneFreq + 0.02f,  ampTuneSmooth.getNextValue(),   0.02f) +
+                                                                detunerFourR->process(channelDataR[i], detuneFreq + 0.03f,ampTuneSmooth.getNextValue(),  0.03f)) *ampTuneAmountSmooth.getNextValue())
                                                                 * ampSmooth.getNextValue() * dryWetSmooth.getNextValue();
             }
         
@@ -240,9 +238,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout PitchyAudioProcessor::create
     
     layout.add(std::make_unique<juce::AudioParameterFloat>("Detune","Detune",0.01f,12.f,7.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("Amp","Amp",0.01f,1.f,1.f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Wet","Wet",0.00f,1.f,0.6f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("Tune","Tune",0.001,1.f,0.74f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("TuneAmount","TuneAmount",0.00f,1.f,0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Wet","Wet",0.00f,1.f,0.85f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("Chorus","Chorus",0.00f,1.f,0.5f));
     return layout;
 }
 

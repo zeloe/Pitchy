@@ -36,7 +36,7 @@ float Pitchy::phasor(float frequency)
 float Pitchy::outofphasephasor(float frequency)
 {
     //maximilian.h
-    outofphasephasor_1 = (1./(mSampleRate/(frequency)));
+    outofphasephasor_1 += (1./(mSampleRate/(frequency)));
     if (outofphasephasor_1 > 1.0) outofphasephasor_1 -= 1.f;
     return outofphasephasor_1;
     
@@ -54,7 +54,7 @@ float Pitchy::phasor2(float frequency)
 float Pitchy::outofphasephasor2(float frequency)
 {
     //maximilian.h
-    outofphasephasor_2 = (1./(mSampleRate/(frequency)));
+    outofphasephasor_2 += (1./(mSampleRate/(frequency)));
     if (outofphasephasor_2 > 1.0) outofphasephasor_2 -= 1.f;
     return outofphasephasor_2;
     
@@ -181,19 +181,19 @@ float Pitchy::process(float inAudio, float frequency, float offsetamp, float off
 {
     
     phasein = this->phasor(frequency);
-    phasein2 = this->phasor2(frequency + offsetfreq);
+    phasein2 = this->phasor2(frequency * offsetfreq);
     phaseout = this->outofphasephasor(frequency);
-    phaseout2 = this->outofphasephasor2(frequency + offsetfreq);
+    phaseout2 = this->outofphasephasor2(frequency * offsetfreq);
     
     //if (mDelayIndex > MaxBufferDelaySize) mDelayIndex -= mDelayIndex;
     delay1 = this->delaylineinter(phasein2, mDelayBuffer_1, inAudio);
     delay2 = this->delaylineinter(phaseout2 , mDelayBuffer_2, inAudio);
-    tempProcess = delay1 * (this->cubic_hermite_interpolation(frequency + offsetfreq, phasein2, possineBuffer)) + delay2 * (this->cubic_hermite_interpolation(frequency + offsetfreq, phaseout2, possineBuffer)) * -1.f;
+    tempProcess = delay1 * (this->cubic_hermite_interpolation(frequency  * offsetfreq, phasein2, possineBuffer)) + delay2 * (this->cubic_hermite_interpolation(frequency * offsetfreq, phaseout2, possineBuffer)) * -1.f;
     delayLine1->pushSample(0, inAudio);
     delayLine1->setDelay(phasein  * mSampleRate * 0.1f);
     delayLine2->pushSample(0, inAudio);
     delayLine2->setDelay(phaseout * mSampleRate * 0.1f);
-    output = (delayLine1->popSample(0) * (this->cubic_hermite_interpolation(frequency, phasein, possineBuffer)) + delayLine2->popSample(0) * (this->cubic_hermite_interpolation(frequency, phaseout, possineBuffer)) * -1.f) + tempProcess * offsetamp;
+    output = (delayLine1->popSample(0) * (this->cubic_hermite_interpolation(frequency + offsetfreq, phasein, possineBuffer)) + delayLine2->popSample(0) * (this->cubic_hermite_interpolation(frequency + offsetfreq, phaseout, possineBuffer)) * -1.f) + tempProcess * offsetamp;
 return output;
 }
 

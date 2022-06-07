@@ -97,6 +97,7 @@ private:
     juce::LinearSmoothedValue<float> offsetSmooth {0.0f};
     juce::LinearSmoothedValue<float> ampTuneSmooth {0.0f};
     juce::LinearSmoothedValue<float> ampTuneAmountSmooth {0.0f};
+
     //float freq = 0.0f;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchyAudioProcessor)
