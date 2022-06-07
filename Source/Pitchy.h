@@ -17,11 +17,13 @@ public:
     Pitchy();
     ~Pitchy();
     
-    float process(float inAudio, float frequency);
+    float process(float inAudio, float frequency, float offsetamp, float offsetfreq);
     double delaylineinter(float inDelayTimeInSamples,  float* inputBuffer, float inputAudio);
     inline float linearinterpol(float v0, float v1, float t);
     float phasor(float frequency);
     float outofphasephasor(float frequency);
+    float phasor2(float frequency);
+    float outofphasephasor2(float frequency);
     float processWaveShape(float frequency, float index, const double* buffer);
     
     void getTheSampleRate(double sampleRate);
@@ -29,7 +31,7 @@ public:
     double InterCubic(float x0, float x1, float x2, float x3, float t);
     float mSampleRate = 0;
     float mblocksize = 0;
-    int MaxBufferDelaySize = 5000;
+    int MaxBufferDelaySize = 10;
     float mDelayBuffer_1 [5000 + 1] {0};
     float mDelayBuffer_2 [5000 + 1] {0};
     std::unique_ptr<juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear>> delayLine1;
@@ -40,9 +42,13 @@ public:
 private:
     float phasor_1;
     float outofphasephasor_1;
+    float phasor_2;
+    float outofphasephasor_2;
     int mDelayIndex = 0;
     float phasein = 0;
+    float phasein2 = 0.0f;
     float phaseout = 0;
+    float phaseout2 =0.0f;
     float delay1 = 0.0f;
     float delay2 = 0.0f;
     float output = 0.0f;

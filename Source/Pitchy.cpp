@@ -10,7 +10,9 @@
 
 Pitchy::Pitchy():
 phasor_1(0.0f),
-outofphasephasor_1(0.25f)
+outofphasephasor_1(0.25f),
+phasor_2(0.0f),
+outofphasephasor_2(0.25f)
 {
     delayLine1 = std::make_unique<juce::dsp::DelayLine<float,juce::dsp::DelayLineInterpolationTypes::Linear>> (5000);
     delayLine2 = std::make_unique<juce::dsp::DelayLine<float,juce::dsp::DelayLineInterpolationTypes::Linear>> (5000);
@@ -40,6 +42,23 @@ float Pitchy::outofphasephasor(float frequency)
     
 }
 
+float Pitchy::phasor2(float frequency)
+{
+    //maximilian.h
+    phasor_2 += (1./(mSampleRate/(frequency)));
+    if (phasor_2 > 1.0) phasor_2 -= 1.f ;
+    return phasor_2;
+    
+}
+
+float Pitchy::outofphasephasor2(float frequency)
+{
+    //maximilian.h
+    outofphasephasor_2 = (1./(mSampleRate/(frequency)));
+    if (outofphasephasor_2 > 1.0) outofphasephasor_2 -= 1.f;
+    return outofphasephasor_2;
+    
+}
 float Pitchy::processWaveShape(float frequency, float index, const double *buffer)
 {
     //maximilian.h
@@ -158,21 +177,23 @@ double Pitchy::delaylineinter(float inDelayTimeInSamples, float *inputBuffer, fl
     
 }
 
-float Pitchy::process(float inAudio, float frequency)
+float Pitchy::process(float inAudio, float frequency, float offsetamp, float offsetfreq)
 {
     
     phasein = this->phasor(frequency);
+    phasein2 = this->phasor2(frequency + offsetfreq);
     phaseout = this->outofphasephasor(frequency);
+    phaseout2 = this->outofphasephasor2(frequency + offsetfreq);
     
     //if (mDelayIndex > MaxBufferDelaySize) mDelayIndex -= mDelayIndex;
-    delay1 = this->delaylineinter(phasein, mDelayBuffer_1, inAudio);
-    delay2 = this->delaylineinter(phaseout , mDelayBuffer_2, inAudio);
-    tempProcess = delay1 * (this->processWaveShape(frequency, phasein, possineBuffer)) + delay2 * (this->processWaveShape(frequency, phaseout, possineBuffer)) * -1.f;
-    delayLine1->pushSample(0, tempProcess);
+    delay1 = this->delaylineinter(phasein2, mDelayBuffer_1, inAudio);
+    delay2 = this->delaylineinter(phaseout2 , mDelayBuffer_2, inAudio);
+    tempProcess = delay1 * (this->processWaveShape(frequency + offsetfreq, phasein2, possineBuffer)) + delay2 * (this->processWaveShape(frequency + offsetfreq, phaseout2, possineBuffer)) * -1.f;
+    delayLine1->pushSample(0, inAudio);
     delayLine1->setDelay(phasein  * mSampleRate * 0.1f);
-    delayLine2->pushSample(0, tempProcess);
+    delayLine2->pushSample(0, inAudio);
     delayLine2->setDelay(phaseout * mSampleRate * 0.1f);
-    output = (delayLine1->popSample(0) * (this->processWaveShape(frequency, phasein, possineBuffer)) + delayLine2->popSample(0) * (this->processWaveShape(frequency, phaseout, possineBuffer)) * -1.f);
+    output = (delayLine1->popSample(0) * (this->processWaveShape(frequency, phasein, possineBuffer)) + delayLine2->popSample(0) * (this->processWaveShape(frequency, phaseout, possineBuffer)) * -1.f) + tempProcess * offsetamp;
 return output;
 }
 
