@@ -24,7 +24,7 @@ public:
     float outofphasephasor(float frequency);
     float phasor2(float frequency);
     float outofphasephasor2(float frequency);
-    float processWaveShape(float frequency, float index, const double* buffer);
+    float cubic_hermite_interpolation(float frequency, float index, const double* buffer);
     
     void getTheSampleRate(double sampleRate);
     void getTheBlockSize(int blocksize);

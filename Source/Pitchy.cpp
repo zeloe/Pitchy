@@ -59,7 +59,7 @@ float Pitchy::outofphasephasor2(float frequency)
     return outofphasephasor_2;
     
 }
-float Pitchy::processWaveShape(float frequency, float index, const double *buffer)
+float Pitchy::cubic_hermite_interpolation(float frequency, float index, const double *buffer)
 {
     //maximilian.h
     //cubic hermite interpolation
@@ -188,12 +188,12 @@ float Pitchy::process(float inAudio, float frequency, float offsetamp, float off
     //if (mDelayIndex > MaxBufferDelaySize) mDelayIndex -= mDelayIndex;
     delay1 = this->delaylineinter(phasein2, mDelayBuffer_1, inAudio);
     delay2 = this->delaylineinter(phaseout2 , mDelayBuffer_2, inAudio);
-    tempProcess = delay1 * (this->processWaveShape(frequency + offsetfreq, phasein2, possineBuffer)) + delay2 * (this->processWaveShape(frequency + offsetfreq, phaseout2, possineBuffer)) * -1.f;
+    tempProcess = delay1 * (this->cubic_hermite_interpolation(frequency + offsetfreq, phasein2, possineBuffer)) + delay2 * (this->cubic_hermite_interpolation(frequency + offsetfreq, phaseout2, possineBuffer)) * -1.f;
     delayLine1->pushSample(0, inAudio);
     delayLine1->setDelay(phasein  * mSampleRate * 0.1f);
     delayLine2->pushSample(0, inAudio);
     delayLine2->setDelay(phaseout * mSampleRate * 0.1f);
-    output = (delayLine1->popSample(0) * (this->processWaveShape(frequency, phasein, possineBuffer)) + delayLine2->popSample(0) * (this->processWaveShape(frequency, phaseout, possineBuffer)) * -1.f) + tempProcess * offsetamp;
+    output = (delayLine1->popSample(0) * (this->cubic_hermite_interpolation(frequency, phasein, possineBuffer)) + delayLine2->popSample(0) * (this->cubic_hermite_interpolation(frequency, phaseout, possineBuffer)) * -1.f) + tempProcess * offsetamp;
 return output;
 }
 
