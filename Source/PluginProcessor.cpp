@@ -23,11 +23,12 @@ PitchyAudioProcessor::PitchyAudioProcessor()
 #endif
 {
     m_Shift = treeState.getRawParameterValue("Shift");
-    //m_Noise  = treeState.getRawParameterValue("NoiseLevel");
+    m_Gain  = treeState.getRawParameterValue("OutGain");
     m_Wet  = treeState.getRawParameterValue("Mix");
     sTFT = std::make_unique<STFT>();
     wet = std::make_unique<Gain_Block_ST>();
     dry = std::make_unique<Gain_Block_ST>();
+    out_gain = std::make_unique<Gain_Block_ST>();
 }
 
 PitchyAudioProcessor::~PitchyAudioProcessor()
@@ -41,16 +42,16 @@ PitchyAudioProcessor::createParameterLayout()
     // you could also use a array with strings and add them in a for loop
     std::vector <std::unique_ptr<juce::RangedAudioParameter>> params;
     
-    auto shiftFactor = std::make_unique<juce::AudioParameterFloat>("Shift","Shift",0.1,10.0,5);    
+    auto shiftFactor = std::make_unique<juce::AudioParameterFloat>("Shift","Shift",0.5,5.0,1.5);    
     
-   // auto noise = std::make_unique<juce::AudioParameterFloat>("NoiseLevel","NoiseLevel",0.0,1.0,0.5);
+    auto gain = std::make_unique<juce::AudioParameterFloat>("OutGain","OutGain",0.0,2.0,0.5);
     
     auto Mix = std::make_unique<juce::AudioParameterFloat>("Mix","Mix",0.0,1.0,0.5);
     
     params.push_back(std::move(shiftFactor));
-    
-    params.push_back(std::move(noise));
+
     params.push_back(std::move(Mix));
+    params.push_back(std::move(gain));
     return {params.begin(),params.end()};
 }
 //==============================================================================
@@ -124,6 +125,7 @@ void PitchyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
                            2);
     wet->prepare();
     dry->prepare();
+    out_gain->prepare();
     dry_Buf.setSize(2,samplesPerBlock);
     wet_Buf.setSize(2,samplesPerBlock);
 }
@@ -163,16 +165,6 @@ bool PitchyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) c
 void PitchyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
-
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-
     
     const float* in_L = buffer.getReadPointer(0);
     const float* in_R = buffer.getReadPointer(1);
@@ -206,6 +198,8 @@ void PitchyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
         wet_ptrLW[i] = read_ptrLD[i] + read_ptrLW[i];
         wet_ptrRW[i] = read_ptrRD[i] + read_ptrRW[i];
     }
+    out_gain->setGain(*m_Gain);
+    out_gain->process(buffer, buffer.getNumSamples());
 }
 
 //==============================================================================

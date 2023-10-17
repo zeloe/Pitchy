@@ -63,12 +63,12 @@ private:
     juce::AudioBuffer<float> wet_Buf;
     std::unique_ptr<Gain_Block_ST> wet;
     std::unique_ptr<Gain_Block_ST> dry;
-    
+    std::unique_ptr<Gain_Block_ST> out_gain;
     
     std::unique_ptr<STFT> sTFT;
     std::atomic<float>* m_Shift  = nullptr;
-    
-   // std::atomic<float>* m_Noise  = nullptr;
+    std::atomic<float>* m_Gain  = nullptr;
+   
     std::atomic<float>* m_Wet  = nullptr;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchyAudioProcessor)
